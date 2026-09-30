@@ -23,6 +23,9 @@ installed and used without a network connection.
 - **CSV export** — download your full log as a CSV file.
 - **Works offline** — data is stored locally on the device (`localStorage`);
   nothing is sent to a server.
+- **Update check** — Settings shows the installed version and a "Check for
+  updates" button that looks at this repo's latest GitHub Release; if it's
+  newer, it offers the APK to download. See [Releasing an update](#releasing-an-update).
 
 ## Repository layout
 
@@ -74,6 +77,26 @@ The APK is written to `android-app/android/app/build/outputs/apk/debug/app-debug
 
 To change the web app itself, edit `Car Log App.html` and copy it over
 `android-app/www/index.html`, then re-run `npx cap sync android` and rebuild.
+
+## Releasing an update
+
+The in-app update check compares its own `APP_VERSION` constant (in the
+`Component` script inside `Car Log App.html`) against the `tag_name` of this
+repo's [latest GitHub Release](../../releases/latest), and offers whichever
+asset in that release matches `*.apk`. To ship an update:
+
+1. Bump `APP_VERSION` in `Car Log App.html` (and copy it to
+   `android-app/www/index.html`).
+2. Bump `versionCode`/`versionName` in
+   `android-app/android/app/build.gradle` to match.
+3. Rebuild (`npx cap sync android && ./gradlew assembleDebug`) and copy the
+   resulting APK to `CarLog.apk`.
+4. Commit, push, then tag a new GitHub Release named `vX.Y` (matching
+   `APP_VERSION`) with `CarLog.apk` attached — e.g.
+   `gh release create vX.Y CarLog.apk`.
+
+Version comparison is numeric per dot-separated segment (`1.10` > `1.9`), and
+the `v` prefix on the tag is ignored.
 
 ## Permissions
 
