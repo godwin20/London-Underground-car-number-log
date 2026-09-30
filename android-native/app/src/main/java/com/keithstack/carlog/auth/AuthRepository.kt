@@ -50,7 +50,13 @@ class AuthRepository(
         }
     }
 
-    /** Links the current anonymous user to this Google credential, preserving its uid and data. */
+    /**
+     * Links the current anonymous user to this Google credential, preserving its uid and data.
+     *
+     * Firebase's AuthStateListener only fires on a sign-in/sign-out transition, not when an
+     * already-signed-in user is linked to a new credential — so [_accountState] is updated
+     * explicitly here rather than relying on the listener in `init`.
+     */
     suspend fun linkGoogleIdToken(idToken: String): Result<Unit> {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         val current = auth.currentUser
@@ -66,6 +72,7 @@ class AuthRepository(
             } else {
                 auth.signInWithCredential(credential).await()
             }
+            _accountState.value = auth.currentUser.toAccountInfo()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -74,6 +81,7 @@ class AuthRepository(
 
     fun signOut() {
         auth.signOut()
+        _accountState.value = auth.currentUser.toAccountInfo()
     }
 
     private fun fallbackUid(): String {
