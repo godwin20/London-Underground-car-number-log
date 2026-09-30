@@ -2,6 +2,7 @@ package com.keithstack.carlog.ui.screens
 
 import android.content.Intent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +22,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.keithstack.carlog.data.KeypadOrder
@@ -31,6 +34,8 @@ import com.keithstack.carlog.ui.CarLogViewModel
 import com.keithstack.carlog.ui.theme.Accent700
 import com.keithstack.carlog.ui.theme.ColorAccent
 import com.keithstack.carlog.ui.theme.ColorDivider
+import com.keithstack.carlog.ui.theme.ColorText
+import com.keithstack.carlog.ui.theme.Neutral100
 import com.keithstack.carlog.ui.theme.Neutral700
 
 @Composable
@@ -48,7 +53,7 @@ fun SettingsScreen(state: CarLogUiState, viewModel: CarLogViewModel, onSignInWit
             val account = state.account
             if (account != null && !account.isAnonymous) {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
@@ -61,13 +66,16 @@ fun SettingsScreen(state: CarLogUiState, viewModel: CarLogViewModel, onSignInWit
                 Text(
                     "Signed in anonymously on this device only. Sign in with Google to keep your log if you reinstall or switch phones.",
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(bottom = 8.dp),
+                    modifier = Modifier.padding(bottom = 10.dp),
                 )
-                Button(onClick = onSignInWithGoogle) { Text("Sign in with Google") }
+                Button(onClick = onSignInWithGoogle, modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp)) {
+                    Text("Sign in with Google")
+                }
             }
             state.signInError?.let {
-                Text(it, style = MaterialTheme.typography.labelSmall, color = Neutral700, modifier = Modifier.padding(top = 8.dp))
+                Text(it, style = MaterialTheme.typography.labelSmall, color = Neutral700, modifier = Modifier.padding(bottom = 14.dp))
             }
+            SectionDivider()
         }
 
         item { SectionHeading("Log screen") }
@@ -79,11 +87,14 @@ fun SettingsScreen(state: CarLogUiState, viewModel: CarLogViewModel, onSignInWit
 
         item { SectionHeading("Entry") }
         item {
-            SegmentedRow("Keypad order", listOf("1 2 3" to (state.settings.order == KeypadOrder.Phone), "7 8 9" to (state.settings.order == KeypadOrder.Calculator))) { index ->
-                viewModel.setOrder(if (index == 0) KeypadOrder.Phone else KeypadOrder.Calculator)
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                SegmentedRow("Keypad order", listOf("1 2 3" to (state.settings.order == KeypadOrder.Phone), "7 8 9" to (state.settings.order == KeypadOrder.Calculator))) { index ->
+                    viewModel.setOrder(if (index == 0) KeypadOrder.Phone else KeypadOrder.Calculator)
+                }
+                SegmentedRow("Stock hints", listOf("On" to state.settings.hints, "Off" to !state.settings.hints)) { index -> viewModel.setHints(index == 0) }
+                SegmentedRow("Vibrate on keys", listOf("On" to state.settings.vibrate, "Off" to !state.settings.vibrate)) { index -> viewModel.setVibrate(index == 0) }
             }
-            SegmentedRow("Stock hints", listOf("On" to state.settings.hints, "Off" to !state.settings.hints)) { index -> viewModel.setHints(index == 0) }
-            SegmentedRow("Vibrate on keys", listOf("On" to state.settings.vibrate, "Off" to !state.settings.vibrate)) { index -> viewModel.setVibrate(index == 0) }
+            SectionDivider(topPadding = 12.dp)
         }
 
         item { SectionHeading("Location") }
@@ -94,12 +105,13 @@ fun SettingsScreen(state: CarLogUiState, viewModel: CarLogViewModel, onSignInWit
                 modifier = Modifier.padding(bottom = 8.dp),
             )
             Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text("Location status", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
                 OutlinedButton(onClick = viewModel::refreshLocationFix) { Text("Get fix") }
             }
+            SectionDivider(topPadding = 12.dp)
         }
 
         item { SectionHeading("Data") }
@@ -107,21 +119,25 @@ fun SettingsScreen(state: CarLogUiState, viewModel: CarLogViewModel, onSignInWit
             Text(
                 "${state.entries.size} ${if (state.entries.size == 1) "sighting" else "sightings"} · $uniqueCars ${if (uniqueCars == 1) "car" else "cars"}, backed up to your account.",
                 style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(bottom = 8.dp),
+                modifier = Modifier.padding(bottom = 12.dp),
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = {
-                    val uri = viewModel.exportCsv()
-                    val intent = Intent(Intent.ACTION_SEND).apply {
-                        type = "text/csv"
-                        putExtra(Intent.EXTRA_STREAM, uri)
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    }
-                    context.startActivity(Intent.createChooser(intent, "Export CSV"))
-                }) { Text("Export CSV") }
-                OutlinedButton(onClick = viewModel::addSample) { Text("Add sample sightings") }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(
+                    onClick = {
+                        val uri = viewModel.exportCsv()
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/csv"
+                            putExtra(Intent.EXTRA_STREAM, uri)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        context.startActivity(Intent.createChooser(intent, "Export CSV"))
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Export CSV") }
+                OutlinedButton(onClick = viewModel::addSample, modifier = Modifier.fillMaxWidth()) { Text("Add sample sightings") }
+                OutlinedButton(onClick = viewModel::askWipe, modifier = Modifier.fillMaxWidth()) { Text("Delete all…") }
             }
-            OutlinedButton(onClick = viewModel::askWipe, modifier = Modifier.padding(top = 8.dp)) { Text("Delete all…") }
+            SectionDivider(topPadding = 14.dp)
         }
 
         item { SectionHeading("Updates") }
@@ -177,39 +193,54 @@ private fun SectionHeading(text: String) {
 }
 
 @Composable
+private fun SectionDivider(topPadding: androidx.compose.ui.unit.Dp = 0.dp) {
+    Box(modifier = Modifier.fillMaxWidth().padding(top = topPadding).height(1.dp).background(ColorDivider))
+}
+
+@Composable
 private fun StyleOption(name: String, description: String, selected: Boolean, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(vertical = 10.dp),
+            .padding(vertical = 12.dp),
         verticalAlignment = Alignment.Top,
     ) {
         RadioButton(selected = selected, onClick = onClick, colors = androidx.compose.material3.RadioButtonDefaults.colors(selectedColor = ColorAccent))
-        Column(modifier = Modifier.padding(start = 8.dp)) {
+        Column(modifier = Modifier.padding(start = 4.dp, top = 10.dp)) {
             Text(name, style = MaterialTheme.typography.bodyLarge)
-            Text(description, style = MaterialTheme.typography.labelSmall, color = Neutral700)
+            Text(description, style = MaterialTheme.typography.labelSmall, color = Neutral700, modifier = Modifier.padding(top = 2.dp))
         }
     }
-    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(ColorDivider))
+    SectionDivider()
 }
 
+/** A bordered pill container with a filled sub-pill for the selected option — reads as one cohesive toggle. */
 @Composable
 private fun SegmentedRow(label: String, options: List<Pair<String, Boolean>>, onSelect: (Int) -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-        Row {
+        Row(
+            modifier = Modifier
+                .border(1.dp, ColorDivider, RoundedCornerShape(8.dp))
+                .padding(3.dp),
+        ) {
             options.forEachIndexed { index, (optLabel, selected) ->
                 Box(
                     modifier = Modifier
-                        .background(if (selected) ColorAccent.copy(alpha = 0.12f) else androidx.compose.ui.graphics.Color.Transparent, RoundedCornerShape(4.dp))
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(if (selected) ColorAccent else Color.Transparent)
                         .clickable { onSelect(index) }
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                        .padding(horizontal = 14.dp, vertical = 7.dp),
                 ) {
-                    Text(optLabel, style = MaterialTheme.typography.bodySmall, color = if (selected) ColorAccent else MaterialTheme.colorScheme.onBackground)
+                    Text(
+                        optLabel,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (selected) Neutral100 else ColorText,
+                    )
                 }
             }
         }
