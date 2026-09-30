@@ -3,10 +3,13 @@
 A pocket logbook for tube spotters. Type the number stencilled on the end of a
 London Underground car and it records the sighting with a timestamp and your
 GPS position, matches it against known rolling stock, and keeps a searchable
-history — all offline, on your phone.
+history.
 
-Built as a self-contained web app, and packaged as an Android APK so it can be
-installed and used without a network connection.
+The primary app (`android-native/`) is a native Kotlin + Jetpack Compose
+Android app backed by Cloud Firestore, so your log survives an app data clear
+and syncs across devices signed into the same (anonymous) account. An earlier
+Capacitor/WebView build (`android-app/`) is kept for reference but is no
+longer what's released.
 
 ## Features
 
@@ -20,32 +23,59 @@ installed and used without a network connection.
   you're near one, the closest station.
 - **History** — every sighting, grouped by day, searchable by car number, with
   a per-car detail view showing every time you've seen it.
-- **CSV export** — download your full log as a CSV file.
-- **Works offline** — data is stored locally on the device (`localStorage`);
-  nothing is sent to a server.
+- **CSV export** — share your full log as a CSV file via the system share sheet.
+- **Cloud-backed, offline-first** — sightings are stored in Cloud Firestore
+  with offline persistence: logging works with no signal, and syncs once
+  back online. See [Firebase setup](#firebase-setup) before your first build.
 - **Update check** — Settings shows the installed version and a "Check for
   updates" button that looks at this repo's latest GitHub Release; if it's
-  newer, it offers the APK to download. See [Releasing an update](#releasing-an-update).
+  newer, it downloads and installs the APK natively. See
+  [Releasing an update](#releasing-an-update).
 
 ## Repository layout
 
 ```
-Car Log App.html     Self-contained web app (HTML/CSS/JS, no build step)
-android-app/          Capacitor project that wraps the web app for Android
-  www/index.html       The web app as packaged into the native app
-  android/             Native Android (Gradle) project
-CarLog.apk            Prebuilt debug APK, ready to install
+android-native/              Primary app: native Kotlin + Jetpack Compose
+  app/google-services.json.example   Template — see Firebase setup
+  app/google-services.json           Your real config goes here (gitignored)
+  app/src/main/java/com/keithstack/carlog/
+    data/                     Stock lookup, Sighting model, Firestore/DataStore repos
+    location/                 LocationManager wrapper
+    update/                   GitHub-release update checker + native installer
+    ui/                       ViewModel, screens, theme
+CarLogNative.apk              Prebuilt debug APK of the native app
+
+Car Log App.html             Original self-contained web app (superseded)
+android-app/                  Legacy Capacitor/WebView project (superseded)
+CarLog.apk                    Prebuilt debug APK of the legacy web app
 ```
+
+## Firebase setup
+
+The native app uses Cloud Firestore (anonymous auth) for the sightings log.
+To connect it to your own Firebase project:
+
+1. In the [Firebase console](https://console.firebase.google.com), create a
+   project (or use an existing one).
+2. Add an Android app with package name `com.keithstack.carlog`.
+3. Enable **Cloud Firestore** (Build → Firestore Database).
+4. Enable **Anonymous** sign-in (Build → Authentication → Sign-in method).
+5. Download the generated `google-services.json` and place it at
+   `android-native/app/google-services.json`, replacing the placeholder.
+
+Without a real `google-services.json`, the app still builds and runs —
+Firestore's local cache means logging still works — but nothing syncs to a
+real backend until you add your own project's config.
 
 ## Installing on Android
 
-Grab [`CarLog.apk`](CarLog.apk) and either:
+Grab [`CarLogNative.apk`](CarLogNative.apk) and either:
 
 - Copy it to your phone (USB, email, cloud drive, etc.) and open it — you'll
   be prompted to allow installing from that source, or
 - With the phone connected over USB with debugging enabled:
   ```
-  adb install CarLog.apk
+  adb install CarLogNative.apk
   ```
 
 This is a debug build signed with a debug key, which is fine for installing
@@ -59,11 +89,61 @@ without a location.
 
 Requirements:
 
-- Node.js
 - A JDK compatible with the Android Gradle Plugin in use (JDK 21 is known to
   work; very new JDKs may fail with `Unsupported class file major version`)
-- Android SDK (platform 34+, build-tools, platform-tools), with
+- Android SDK (platform 36, build-tools, platform-tools), with
   `ANDROID_HOME`/`ANDROID_SDK_ROOT` set and licenses accepted
+- Your own `android-native/app/google-services.json` (see
+  [Firebase setup](#firebase-setup)) — the placeholder checked in lets it
+  build and run against Firestore's local cache only
+
+```
+cd android-native
+./gradlew assembleDebug
+```
+
+The APK is written to
+`android-native/app/build/outputs/apk/debug/app-debug.apk`.
+
+## Releasing an update
+
+The in-app update check compares its own `APP_VERSION` constant (in
+`android-native/app/src/main/java/com/keithstack/carlog/ui/CarLogViewModel.kt`)
+against the `tag_name` of this repo's
+[latest GitHub Release](../../releases/latest), and offers whichever asset in
+that release matches `*.apk`. To ship an update:
+
+1. Bump `APP_VERSION` in `CarLogViewModel.kt`.
+2. Bump `versionCode`/`versionName` in `android-native/app/build.gradle` to
+   match.
+3. Rebuild (`./gradlew assembleDebug`) and copy the resulting APK to
+   `CarLogNative.apk`.
+4. Commit, push, then tag a new GitHub Release named `vX.Y` (matching
+   `APP_VERSION`) with `CarLogNative.apk` attached — e.g.
+   `gh release create vX.Y CarLogNative.apk`.
+
+Version comparison is numeric per dot-separated segment (`1.10` > `1.9`), and
+the `v` prefix on the tag is ignored.
+
+## Permissions
+
+| Permission                 | Why                                              |
+|-----------------------------|---------------------------------------------------|
+| `ACCESS_FINE_LOCATION`      | Tag sightings with GPS coordinates                |
+| `ACCESS_COARSE_LOCATION`    | Fallback location accuracy                        |
+| `VIBRATE`                   | Haptic feedback on keypad taps                    |
+| `INTERNET`                  | Firestore sync and the update checker             |
+| `REQUEST_INSTALL_PACKAGES`  | Installing a downloaded update APK                |
+
+Sightings are stored under an anonymous Firebase account tied to this device
+install. Anonymous auth doesn't survive an uninstall — see the code comment
+on `AuthRepository` for the upgrade path to a persistent sign-in.
+
+## Legacy web app (`android-app/`, `Car Log App.html`)
+
+The original implementation was a self-contained HTML/JS app wrapped in a
+Capacitor WebView shell, storing data in `localStorage` only. It's kept in
+the repo for reference. To build it:
 
 ```
 cd android-app
@@ -72,39 +152,3 @@ npx cap sync android
 cd android
 ./gradlew assembleDebug
 ```
-
-The APK is written to `android-app/android/app/build/outputs/apk/debug/app-debug.apk`.
-
-To change the web app itself, edit `Car Log App.html` and copy it over
-`android-app/www/index.html`, then re-run `npx cap sync android` and rebuild.
-
-## Releasing an update
-
-The in-app update check compares its own `APP_VERSION` constant (in the
-`Component` script inside `Car Log App.html`) against the `tag_name` of this
-repo's [latest GitHub Release](../../releases/latest), and offers whichever
-asset in that release matches `*.apk`. To ship an update:
-
-1. Bump `APP_VERSION` in `Car Log App.html` (and copy it to
-   `android-app/www/index.html`).
-2. Bump `versionCode`/`versionName` in
-   `android-app/android/app/build.gradle` to match.
-3. Rebuild (`npx cap sync android && ./gradlew assembleDebug`) and copy the
-   resulting APK to `CarLog.apk`.
-4. Commit, push, then tag a new GitHub Release named `vX.Y` (matching
-   `APP_VERSION`) with `CarLog.apk` attached — e.g.
-   `gh release create vX.Y CarLog.apk`.
-
-Version comparison is numeric per dot-separated segment (`1.10` > `1.9`), and
-the `v` prefix on the tag is ignored.
-
-## Permissions
-
-| Permission             | Why                                              |
-|-------------------------|---------------------------------------------------|
-| `ACCESS_FINE_LOCATION`  | Tag sightings with GPS coordinates                |
-| `ACCESS_COARSE_LOCATION`| Fallback location accuracy                        |
-| `VIBRATE`               | Haptic feedback on keypad taps                    |
-| `INTERNET`              | Required by the Capacitor/WebView runtime         |
-
-No data leaves the device — these permissions are used entirely locally.
