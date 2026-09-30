@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
@@ -42,7 +42,7 @@ import com.keithstack.carlog.ui.theme.Neutral900
 fun CarLogApp(viewModel: CarLogViewModel = viewModel(), onSignInWithGoogle: () -> Unit = {}) {
     val state by viewModel.state.collectAsState()
 
-    Box(modifier = Modifier.fillMaxSize().background(ColorBg)) {
+    Box(modifier = Modifier.fillMaxSize().background(ColorBg).safeDrawingPadding()) {
         Column(modifier = Modifier.fillMaxSize()) {
             Box(modifier = Modifier.weight(1f)) {
                 when (state.screen) {
@@ -94,8 +94,7 @@ private fun BottomNav(current: Screen, onSelect: (Screen) -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .height(76.dp)
-            .background(ColorBg)
-            .navigationBarsPadding(),
+            .background(ColorBg),
     ) {
         NavTab(Modifier.weight(1f), "Log", Icons.AutoMirrored.Filled.List, current == Screen.Log) { onSelect(Screen.Log) }
         NavTab(Modifier.weight(1f), "History", Icons.Filled.History, current == Screen.History) { onSelect(Screen.History) }
