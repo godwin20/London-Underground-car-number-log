@@ -34,13 +34,40 @@ import com.keithstack.carlog.ui.theme.ColorDivider
 import com.keithstack.carlog.ui.theme.Neutral700
 
 @Composable
-fun SettingsScreen(state: CarLogUiState, viewModel: CarLogViewModel) {
+fun SettingsScreen(state: CarLogUiState, viewModel: CarLogViewModel, onSignInWithGoogle: () -> Unit = {}) {
     val context = LocalContext.current
     val uniqueCars = state.entries.map { it.car }.distinct().size
 
     LazyColumn(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
         item {
             Text("Settings", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(vertical = 18.dp))
+        }
+
+        item { SectionHeading("Account") }
+        item {
+            val account = state.account
+            if (account != null && !account.isAnonymous) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(account.displayName ?: account.email ?: "Signed in", style = MaterialTheme.typography.bodyMedium)
+                        account.email?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = Neutral700) }
+                    }
+                    OutlinedButton(onClick = viewModel::signOutGoogle) { Text("Sign out") }
+                }
+            } else {
+                Text(
+                    "Signed in anonymously on this device only. Sign in with Google to keep your log if you reinstall or switch phones.",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+                Button(onClick = onSignInWithGoogle) { Text("Sign in with Google") }
+            }
+            state.signInError?.let {
+                Text(it, style = MaterialTheme.typography.labelSmall, color = Neutral700, modifier = Modifier.padding(top = 8.dp))
+            }
         }
 
         item { SectionHeading("Log screen") }

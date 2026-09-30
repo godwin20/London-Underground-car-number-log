@@ -1,5 +1,6 @@
 package com.keithstack.carlog.ui
 
+import com.keithstack.carlog.auth.AccountInfo
 import com.keithstack.carlog.data.AppSettings
 import com.keithstack.carlog.data.Sighting
 import com.keithstack.carlog.location.LocationStatus
@@ -35,4 +36,6 @@ data class CarLogUiState(
     val wipeOpen: Boolean = false,
     val update: UpdateUiState = UpdateUiState(),
     val exportCsvUri: String? = null,
+    val account: AccountInfo? = null,
+    val signInError: String? = null,
 )

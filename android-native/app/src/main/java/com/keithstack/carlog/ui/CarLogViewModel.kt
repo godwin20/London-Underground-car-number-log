@@ -50,6 +50,7 @@ class CarLogViewModel(application: Application) : AndroidViewModel(application) 
 
     private var uid: String? = null
     private var snackJob: Job? = null
+    private var sightingsJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -69,13 +70,48 @@ class CarLogViewModel(application: Application) : AndroidViewModel(application) 
             }
         }
         viewModelScope.launch {
+            authRepository.accountState.collect { account ->
+                _state.update { it.copy(account = account) }
+            }
+        }
+        viewModelScope.launch {
             val resolvedUid = authRepository.ensureSignedIn()
-            uid = resolvedUid
+            subscribeToSightings(resolvedUid)
+        }
+        checkForUpdate()
+    }
+
+    private fun subscribeToSightings(resolvedUid: String) {
+        uid = resolvedUid
+        sightingsJob?.cancel()
+        sightingsJob = viewModelScope.launch {
             sightingsRepository.observeSightings(resolvedUid).collect { entries ->
                 _state.update { it.copy(entries = entries) }
             }
         }
-        checkForUpdate()
+    }
+
+    // ---- Google Sign-In ----
+
+    fun handleGoogleSignInToken(idToken: String?) {
+        if (idToken == null) {
+            _state.update { it.copy(signInError = "Google sign-in didn't return a token") }
+            return
+        }
+        viewModelScope.launch {
+            val result = authRepository.linkGoogleIdToken(idToken)
+            result.onSuccess {
+                subscribeToSightings(authRepository.ensureSignedIn())
+                _state.update { it.copy(signInError = null) }
+            }.onFailure { e ->
+                _state.update { it.copy(signInError = e.message ?: "Google sign-in failed") }
+            }
+        }
+    }
+
+    fun signOutGoogle() {
+        authRepository.signOut()
+        viewModelScope.launch { subscribeToSightings(authRepository.ensureSignedIn()) }
     }
 
     fun startLocationTracking() = locationTracker.start()

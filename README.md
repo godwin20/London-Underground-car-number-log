@@ -6,10 +6,10 @@ GPS position, matches it against known rolling stock, and keeps a searchable
 history.
 
 The primary app (`android-native/`) is a native Kotlin + Jetpack Compose
-Android app backed by Cloud Firestore, so your log survives an app data clear
-and syncs across devices signed into the same (anonymous) account. An earlier
-Capacitor/WebView build (`android-app/`) is kept for reference but is no
-longer what's released.
+Android app backed by Cloud Firestore, so your log survives an app data
+clear, and — if you link a Google account in Settings — a reinstall or a
+switch to a new phone too. An earlier Capacitor/WebView build
+(`android-app/`) is kept for reference but is no longer what's released.
 
 ## Features
 
@@ -27,6 +27,9 @@ longer what's released.
 - **Cloud-backed, offline-first** — sightings are stored in Cloud Firestore
   with offline persistence: logging works with no signal, and syncs once
   back online. See [Firebase setup](#firebase-setup) before your first build.
+- **Google Sign-In (optional)** — Settings → Account lets you link the
+  anonymous account to a Google sign-in, so your log survives a reinstall or
+  a switch to a new phone, without losing any existing data.
 - **Update check** — Settings shows the installed version and a "Check for
   updates" button that looks at this repo's latest GitHub Release; if it's
   newer, it downloads and installs the APK natively. See
@@ -52,20 +55,41 @@ CarLog.apk                    Prebuilt debug APK of the legacy web app
 
 ## Firebase setup
 
-The native app uses Cloud Firestore (anonymous auth) for the sightings log.
-To connect it to your own Firebase project:
+The native app uses Cloud Firestore (anonymous auth, upgradeable to Google
+Sign-In) for the sightings log. To connect it to your own Firebase project:
 
 1. In the [Firebase console](https://console.firebase.google.com), create a
    project (or use an existing one).
 2. Add an Android app with package name `com.keithstack.carlog`.
-3. Enable **Cloud Firestore** (Build → Firestore Database).
+3. Enable **Cloud Firestore** (Build → Firestore Database), and publish
+   security rules scoping each user to their own data:
+   ```
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       match /users/{userId}/{document=**} {
+         allow read, write: if request.auth != null && request.auth.uid == userId;
+       }
+     }
+   }
+   ```
 4. Enable **Anonymous** sign-in (Build → Authentication → Sign-in method).
-5. Download the generated `google-services.json` and place it at
+5. To let users back up their log with **Google Sign-In** (Settings → Account
+   → "Sign in with Google" links the existing anonymous account in place, so
+   no data is lost): also enable the **Google** sign-in provider, and add
+   this build's SHA-1 fingerprint under Project settings → Your apps →
+   Add fingerprint. For the debug keystore:
+   ```
+   keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android
+   ```
+6. Download the generated `google-services.json` and place it at
    `android-native/app/google-services.json`, replacing the placeholder.
 
 Without a real `google-services.json`, the app still builds and runs —
 Firestore's local cache means logging still works — but nothing syncs to a
-real backend until you add your own project's config.
+real backend until you add your own project's config. Without Google
+Sign-In configured, the app still works fully on anonymous auth alone; the
+Settings screen just won't complete the linking flow.
 
 ## Installing on Android
 

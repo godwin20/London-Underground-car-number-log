@@ -39,7 +39,7 @@ import com.keithstack.carlog.ui.theme.Neutral700
 import com.keithstack.carlog.ui.theme.Neutral900
 
 @Composable
-fun CarLogApp(viewModel: CarLogViewModel = viewModel()) {
+fun CarLogApp(viewModel: CarLogViewModel = viewModel(), onSignInWithGoogle: () -> Unit = {}) {
     val state by viewModel.state.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize().background(ColorBg)) {
@@ -49,7 +49,7 @@ fun CarLogApp(viewModel: CarLogViewModel = viewModel()) {
                     Screen.Log -> LogScreen(state = state, viewModel = viewModel)
                     Screen.History -> HistoryScreen(state = state, viewModel = viewModel)
                     Screen.Detail -> DetailScreen(state = state, viewModel = viewModel)
-                    Screen.Settings -> SettingsScreen(state = state, viewModel = viewModel)
+                    Screen.Settings -> SettingsScreen(state = state, viewModel = viewModel, onSignInWithGoogle = onSignInWithGoogle)
                 }
             }
             if (state.screen != Screen.Detail) {
