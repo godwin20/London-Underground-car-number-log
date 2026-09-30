@@ -35,7 +35,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.UUID
 
-const val APP_VERSION = "1.6"
+const val APP_VERSION = "1.7"
 
 class CarLogViewModel(application: Application) : AndroidViewModel(application) {
 

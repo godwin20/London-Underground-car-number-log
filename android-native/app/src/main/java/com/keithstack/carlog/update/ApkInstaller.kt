@@ -23,9 +23,9 @@ class ApkInstaller(private val context: Context) {
         Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${context.packageName}"))
 
     fun downloadAndInstall(url: String, versionLabel: String) {
-        val fileName = "CarLog-$versionLabel.apk"
+        val fileName = "Waymark-$versionLabel.apk"
         val request = DownloadManager.Request(Uri.parse(url))
-            .setTitle("Car Log update $versionLabel")
+            .setTitle("Waymark update $versionLabel")
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
             .setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, fileName)
 

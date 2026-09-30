@@ -1,4 +1,4 @@
-# London Underground Car Number Log
+# Waymark — London Underground Car Number Log
 
 A pocket logbook for tube spotters. Type the number stencilled on the end of a
 London Underground car and it records the sighting with a timestamp and your
