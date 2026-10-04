@@ -18,8 +18,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -55,6 +61,12 @@ fun DetailScreen(state: CarLogUiState, viewModel: CarLogViewModel) {
             Text(car, style = MaterialTheme.typography.headlineLarge, fontSize = 64.sp)
             Text(stock?.lines ?: "Not in the fleet list", style = MaterialTheme.typography.bodyMedium)
 
+            Text("STORY", style = MaterialTheme.typography.labelSmall, color = Neutral700, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
+            Text(
+                stock?.story ?: "This number isn't in the known fleet ranges, so there's no build history to show.",
+                style = MaterialTheme.typography.bodySmall,
+            )
+
             Row(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text("${seen.size}", style = MaterialTheme.typography.headlineLarge)
@@ -66,6 +78,25 @@ fun DetailScreen(state: CarLogUiState, viewModel: CarLogViewModel) {
                     Text("first seen", style = MaterialTheme.typography.labelSmall, color = Neutral700)
                 }
             }
+            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(ColorDivider))
+
+            Text("YOUR NOTES", style = MaterialTheme.typography.labelSmall, color = Neutral700, modifier = Modifier.padding(top = 14.dp, bottom = 4.dp))
+            val savedNote = state.carNotes[car] ?: ""
+            var noteText by remember(car) { mutableStateOf(savedNote) }
+            OutlinedTextField(
+                value = noteText,
+                onValueChange = { noteText = it },
+                placeholder = { Text("What's different about this specific car — livery, depot, anything you've noticed") },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 2,
+            )
+            if (noteText != savedNote) {
+                TextButton(
+                    onClick = { viewModel.setCarNote(car, noteText) },
+                    modifier = Modifier.align(Alignment.End),
+                ) { Text("Save note") }
+            }
+
             Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(ColorDivider))
             Text("SIGHTINGS", style = MaterialTheme.typography.labelSmall, color = Neutral700, modifier = Modifier.padding(vertical = 8.dp))
 

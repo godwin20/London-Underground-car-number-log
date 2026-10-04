@@ -10,6 +10,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.keithstack.carlog.auth.AuthRepository
+import com.keithstack.carlog.data.CarNotesRepository
 import com.keithstack.carlog.data.KeypadOrder
 import com.keithstack.carlog.data.LogStyle
 import com.keithstack.carlog.data.STATIONS
@@ -35,12 +36,13 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.UUID
 
-const val APP_VERSION = "1.8"
+const val APP_VERSION = "1.9"
 
 class CarLogViewModel(application: Application) : AndroidViewModel(application) {
 
     private val authRepository = AuthRepository(application)
     private val sightingsRepository = SightingsRepository()
+    private val carNotesRepository = CarNotesRepository()
     private val settingsRepository = SettingsRepository(application)
     private val locationTracker = LocationTracker(application)
     val apkInstaller = ApkInstaller(application)
@@ -51,6 +53,7 @@ class CarLogViewModel(application: Application) : AndroidViewModel(application) 
     private var uid: String? = null
     private var snackJob: Job? = null
     private var sightingsJob: Job? = null
+    private var carNotesJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -88,6 +91,19 @@ class CarLogViewModel(application: Application) : AndroidViewModel(application) 
             sightingsRepository.observeSightings(resolvedUid).collect { entries ->
                 _state.update { it.copy(entries = entries) }
             }
+        }
+        carNotesJob?.cancel()
+        carNotesJob = viewModelScope.launch {
+            carNotesRepository.observeNotes(resolvedUid).collect { notes ->
+                _state.update { it.copy(carNotes = notes) }
+            }
+        }
+    }
+
+    fun setCarNote(car: String, text: String) {
+        viewModelScope.launch {
+            val resolvedUid = uid ?: authRepository.ensureSignedIn().also { uid = it }
+            carNotesRepository.setNote(resolvedUid, car, text)
         }
     }
 

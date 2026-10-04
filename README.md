@@ -21,8 +21,11 @@ switch to a new phone too. An earlier Capacitor/WebView build
   Stock) and shows the line(s) it runs on.
 - **Location tagging** — each sighting is stamped with GPS coordinates and, if
   you're near one, the closest station.
-- **History** — every sighting, grouped by day, searchable by car number, with
-  a per-car detail view showing every time you've seen it.
+- **History** — every sighting, grouped by day or by car, searchable by car
+  number, with a per-car detail view showing every time you've seen it.
+- **Car story & notes** — each car's detail page shows the build history of
+  its stock type (builder, build years, which line it replaced), plus a
+  freeform notes field for anything you've noticed about that specific car.
 - **CSV export** — share your full log as a CSV file via the system share sheet.
 - **Cloud-backed, offline-first** — sightings are stored in Cloud Firestore
   with offline persistence: logging works with no signal, and syncs once

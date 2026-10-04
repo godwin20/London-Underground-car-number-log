@@ -6,19 +6,42 @@ import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-data class StockRange(val name: String, val lines: String, val ranges: List<IntRange>)
+data class StockRange(val name: String, val lines: String, val ranges: List<IntRange>, val story: String)
 
 data class Station(val name: String, val lat: Double, val lon: Double)
 
+private const val STORY_1972 =
+    "Built by Metro-Cammell in the early 1970s to a derivative of the 1967 Tube Stock design, these cars " +
+        "first ran on the Northern line before being cascaded to the Bakerloo line by 1979, where they still " +
+        "run today — among the oldest passenger stock on the Underground."
+private const val STORY_1973 =
+    "Built by Metro-Cammell between 1973 and 1977 for the Piccadilly line, these cars replaced 1938 Stock " +
+        "and were specified with extra luggage space ahead of the line's extension to Heathrow Airport in 1977."
+private const val STORY_1992 =
+    "Built by BREL/ABB in the early 1990s, these cars introduced automatic train operation to the " +
+        "Underground, with drivers mainly closing doors and starting the train rather than driving it by hand."
+private const val STORY_1995 =
+    "Built by GEC Alsthom at Washwood Heath between 1996 and 2000, these cars replaced a mix of 1959 and " +
+        "1972 Stock on the Northern line and were the first Tube stock with a walk-through, gangwayed design."
+private const val STORY_1996 =
+    "Built by GEC Alsthom in the mid-1990s for the Jubilee line, these cars entered service alongside the " +
+        "line's extension from Green Park to Stratford, opened in stages through 1999."
+private const val STORY_2009 =
+    "Built by Bombardier Transportation at Derby between 2009 and 2011, these cars replaced 1967 Stock on " +
+        "the Victoria line and run under one of the Underground's most advanced automatic signalling systems."
+private const val STORY_S =
+    "Built by Bombardier Transportation at Derby between 2010 and 2017, these cars replaced several older " +
+        "sub-surface fleets and were the first on the Underground with walk-through carriages and air conditioning."
+
 val STOCK: List<StockRange> = listOf(
-    StockRange("1972 Stock", "Bakerloo line", listOf(3200..3299, 3300..3399, 3500..3599, 4200..4399, 4500..4599)),
-    StockRange("1973 Stock", "Piccadilly line", listOf(100..699, 800..899)),
-    StockRange("1992 Stock", "Central line", listOf(91001..91399, 92001..92399, 93001..93399)),
-    StockRange("1992 Stock", "Waterloo & City line", listOf(65500..65599, 67500..67599)),
-    StockRange("1995 Stock", "Northern line", listOf(51501..51699, 52501..52699, 53501..53699)),
-    StockRange("1996 Stock", "Jubilee line", listOf(96001..96799)),
-    StockRange("2009 Stock", "Victoria line", listOf(11001..18099)),
-    StockRange("S Stock", "Metropolitan, District, Circle, H&C", listOf(21001..28199)),
+    StockRange("1972 Stock", "Bakerloo line", listOf(3200..3299, 3300..3399, 3500..3599, 4200..4399, 4500..4599), STORY_1972),
+    StockRange("1973 Stock", "Piccadilly line", listOf(100..699, 800..899), STORY_1973),
+    StockRange("1992 Stock", "Central line", listOf(91001..91399, 92001..92399, 93001..93399), STORY_1992),
+    StockRange("1992 Stock", "Waterloo & City line", listOf(65500..65599, 67500..67599), STORY_1992),
+    StockRange("1995 Stock", "Northern line", listOf(51501..51699, 52501..52699, 53501..53699), STORY_1995),
+    StockRange("1996 Stock", "Jubilee line", listOf(96001..96799), STORY_1996),
+    StockRange("2009 Stock", "Victoria line", listOf(11001..18099), STORY_2009),
+    StockRange("S Stock", "Metropolitan, District, Circle, H&C", listOf(21001..28199), STORY_S),
 )
 
 val STATIONS: List<Station> = listOf(
