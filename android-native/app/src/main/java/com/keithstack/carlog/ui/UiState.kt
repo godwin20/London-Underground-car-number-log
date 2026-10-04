@@ -32,6 +32,7 @@ data class CarLogUiState(
     val detailCar: String? = null,
     val input: String = "",
     val query: String = "",
+    val historyByCar: Boolean = false,
     val snack: SnackState? = null,
     val wipeOpen: Boolean = false,
     val update: UpdateUiState = UpdateUiState(),

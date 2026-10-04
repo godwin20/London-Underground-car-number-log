@@ -35,7 +35,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.UUID
 
-const val APP_VERSION = "1.7"
+const val APP_VERSION = "1.8"
 
 class CarLogViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -233,6 +233,10 @@ class CarLogViewModel(application: Application) : AndroidViewModel(application) 
 
     fun setQuery(query: String) {
         _state.update { it.copy(query = query.filter { c -> c.isDigit() }.take(5)) }
+    }
+
+    fun setHistoryByCar(byCar: Boolean) {
+        _state.update { it.copy(historyByCar = byCar) }
     }
 
     // ---- settings ----
